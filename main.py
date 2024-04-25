@@ -37,22 +37,3 @@ output_path = '/mnt/c/Users/sasha/projects/pdfTest/theFile.pdf'
 img_with_boxes.save(output_path)
 print("Image with layout saved at:", output_path)
 
-# model = lp.Detectron2LayoutModel('lp://HJDataset/faster_rcnn_R_50_FPN_3x/config')
-
-
-# for i, img in enumerate(image_array):
-#     layout = model.detect(img)
-#     img_with_boxes = lp.draw_box(img, layout, box_width=3)
-#
-#     # Save the modified image with layout boxes
-#     output_path = '/mnt/c/Users/sasha/projects/pdfTest/theFile.pdf'
-#
-#     # Convert numpy array to PIL image
-#     output_image = Image.fromarray(img_with_boxes)
-#
-#     # Save the image
-#     output_image.save(output_path)
-#
-#     print("Image with layout saved at:", output_path)
-#
-# print('All images processed and saved with layout boxes.')
