@@ -32,6 +32,13 @@ model = lp.Detectron2LayoutModel('lp://PubLayNet/faster_rcnn_R_50_FPN_3x/config'
                                  label_map={0: "Text", 1: "Title", 2: "List", 3:"Table", 4:"Figure"})
 
 layout = model.detect(image)
+lp.elements.Layout
+text_blocks = lp.Layout([b for b in layout if b.type=='Text'])
+figure_blocks = lp.Layout([b for b in layout if b.type=='Figure'])
+text_blocks = lp.Layout([b for b in text_blocks \
+                   if not any(b.is_in(b_fig) for b_fig in figure_blocks)])
+
+
 img_with_boxes = lp.draw_box(image, layout, box_width=3)
 output_path = '/mnt/c/Users/sasha/projects/pdfTest/theFile.pdf'
 img_with_boxes.save(output_path)
