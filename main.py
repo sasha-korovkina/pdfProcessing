@@ -39,7 +39,7 @@ text_blocks = lp.Layout([b for b in text_blocks \
 
 
 img_with_boxes = lp.draw_box(image, layout, box_width=3)
-output_path = '/mnt/c/Users/sasha/projects/pdfTest/theFile.pdf'
+output_path = '/mnt/c/Users/sasha/projects/pdfTest/TableBank50.pdf'
 img_with_boxes.save(output_path)
 print("Image with layout saved at:", output_path)
 

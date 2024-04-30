@@ -9,13 +9,16 @@ import matplotlib.pyplot as plt
 
 # Define the path to the image file
 # C:\Users\sasha\projects\pdfTest\CI Games Authorisation Letter 2023.jpg
-image_file = "/mnt/c/Users/sasha/projects/pdfTest/sampleScannedPDFI.jpg"
+# C:\Users\sasha\projects\pdfTest\sampleScannedPDFl.jpg
+#"C:\Users\sasha\projects\pdfTest\sampleScannedPDFl.jpg"
+#
+image_file = "/mnt/c/Users/sasha/projects/pdfTest/2020-ShareholderReportsTable.png"
 
 # Define the path to save the image
-output_image_file = "/mnt/c/Users/sasha/projects/pdfTest/output/sampleScannedPDFI.png"
+output_image_file = "/mnt/c/Users/sasha/projects/pdfTest/output/2020-ShareholderReportsTable.png"
 
 # Attempt to read the image
-image = plt.imread(image_file)
+image = cv2.imread(image_file)
 
 # Check if the image is read successfully
 if image is None:
@@ -34,8 +37,8 @@ model = lp.Detectron2LayoutModel('lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config'
 layout = model.detect(image)
 lp.elements.Layout
 font = ImageFont.load_default()
-img_with_boxes = lp.draw_box(image, layout, box_width=3, box_alpha = 0.5, show_element_type=True)
+img_with_boxes = lp.draw_box(image, layout, box_width=3, box_alpha = 0.5, show_element_type=True, id_font_size = 72)
 
-output_path = '/mnt/c/Users/sasha/projects/pdfTest/output/PrimaLayoutTest.pdf'
+output_path = '/mnt/c/Users/sasha/projects/pdfTest/output/PrimaLayout.pdf'
 img_with_boxes.save(output_path)
 print("Image with layout saved at:", output_path)
