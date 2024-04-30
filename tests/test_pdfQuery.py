@@ -8,6 +8,7 @@ import math
 import os
 import pandas as pd
 
+# C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf
 file_path = r"C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf"
 output_pdf_path = r"C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf"
 
@@ -17,7 +18,6 @@ pdf.tree.write(r"C:\Users\sasha\projects\pdfTest\output\outXML.xml", pretty_prin
 
 packet = io.BytesIO()
 can = canvas.Canvas(packet)
-
 
 def process_pdf_file(pdf_file_path):
     print(f"Processing {pdf_file_path}...")
@@ -94,7 +94,7 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
 
         # Merge the DataFrames based on the y1 coordinate
         merged_df = pd.merge(df_bene, df_pos, on='y1', how='inner')
-        # print(merged_df.columns)
+        merged_df = merged_df[merged_df['text_pos'] != 'Holding']
 
         # Display the merged DataFrame
         if not merged_df.empty:
