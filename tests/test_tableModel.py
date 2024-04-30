@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 # C:\Users\sasha\projects\pdfTest\sampleScannedPDFl.jpg
 #"C:\Users\sasha\projects\pdfTest\sampleScannedPDFl.jpg"
 #
-image_file = "/mnt/c/Users/sasha/projects/pdfTest/2020-ShareholderReportsTable.png"
+image_file = "/mnt/c/Users/sasha/projects/pdfTest/input/Various 20230331 (2)-1.png"
 
 # Define the path to save the image
-output_image_file = "/mnt/c/Users/sasha/projects/pdfTest/output/2020-ShareholderReportsTable.png"
+output_image_file = "/mnt/c/Users/sasha/projects/pdfTest/output/Various 20230331 (2)-1.png"
 
 # Attempt to read the image
 image = cv2.imread(image_file)
@@ -30,14 +30,13 @@ else:
 
 image = image[..., ::-1]
 
-# PubLayNet
-model = lp.Detectron2LayoutModel('lp://PrimaLayout/mask_rcnn_R_50_FPN_3x/config',
-                                 label_map={1:"TextRegion", 2:"ImageRegion", 3:"TableRegion", 4:"MathsRegion", 5:"SeparatorRegion", 6:"OtherRegion"})
+model = lp.Detectron2LayoutModel('lp://TableBank/faster_rcnn_R_50_FPN_3x/config',
+                                 label_map={0: "Table"})
 
 layout = model.detect(image)
 lp.elements.Layout
 font = ImageFont.load_default()
-img_with_boxes = lp.draw_box(image, layout, box_width=3, box_alpha = 0.5, show_element_type=True, id_font_size = 72)
+img_with_boxes = lp.draw_box(image, layout, box_width=3, box_alpha = 0.5, show_element_type=True, id_font_size = 16)
 
 output_path = '/mnt/c/Users/sasha/projects/pdfTest/output/PrimaLayout.pdf'
 img_with_boxes.save(output_path)

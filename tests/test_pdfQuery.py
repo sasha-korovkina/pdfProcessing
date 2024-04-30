@@ -22,33 +22,55 @@ pdf_writer = PdfWriter()
 packet = io.BytesIO()
 can = canvas.Canvas(packet)
 
-for page in root.findall('.//LTPage'):
-    page_num = int(page.get('page_index'))
-    pdf_page = pdf_reader.pages[page_num]
-    page_height = float(pdf_page.mediabox[3])  # Convert to regular float
+def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
+    # Load the XML file
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
 
-    can.setPageSize((pdf_page.mediabox[2], pdf_page.mediabox[3]))
+    # Load the PDF
+    pdf_reader = PdfReader(input_pdf_path)
+    pdf_writer = PdfWriter()
 
-    for elem in page.findall('.//*[@bbox]'):
-        bbox = eval(elem.get('bbox'))  # Convert string representation of list to actual list
-        x0, y0, x1, y1 = map(float, bbox)
-        print(x0, y0, x1, y1 )
-        can.rect(x0, y0, x1-x0, y1 - y0, stroke=1, fill=0)
-    can.showPage()
-    pdf_writer.add_page(pdf_page)
+    # Iterate over pages in the XML
+    for page in root.findall('.//LTPage'):
+        page_num = int(page.get('page_index'))
+        pdf_page = pdf_reader.pages[page_num]
+        page_height = float(pdf_page.mediabox[3])  # The top edge of the PDF page
 
-# Save the changes to the new canvas
-can.save()
-packet.seek(0)
-overlay_pdf = PdfReader(packet)
+        # Create a canvas to draw on
+        packet = io.BytesIO()
+        can = canvas.Canvas(packet, pagesize=(pdf_page.mediabox[2], page_height))
+        can.setPageSize((pdf_page.mediabox[2], page_height))
 
-# Now merge pages properly
-for page_num in range(len(pdf_reader.pages)):
-    original_page = pdf_writer.pages[page_num]  # Access the already added page
-    overlay_page = overlay_pdf.pages[page_num]  # Overlay page
-    original_page.merge_page(overlay_page)
+        # Draw rectangles and text
+        for elem in page.findall('.//*[@bbox]'):
+            bbox = eval(elem.get('bbox'))  # Convert string representation to actual list
+            x0, y0, x1, y1 = map(float, bbox)
 
-# Save the final output PDF
-with open(output_pdf_path, "wb") as f_out:
-    print(f_out)
-    pdf_writer.write(f_out)
+            # Adjust y-coordinates
+            adjusted_y0 = page_height - y1
+            adjusted_y1 = page_height - y0
+
+            # Draw the rectangle
+            can.rect(x0, y0, x1 - x0, y1 - y0, stroke=1, fill=0)
+
+            # Retrieve and draw the text if available
+            text = elem.text.strip() if elem.text else ""
+            text_x = x0
+            text_y = y0 # Center text vertically in the rectangle
+            can.drawString(text_x, text_y, text)
+            print(text_x, text_y, text)
+
+        # Finalize the canvas and add it to the PDF
+        can.save()
+        packet.seek(0)
+        new_pdf = PdfReader(packet)
+        new_page = new_pdf.pages[0]
+        pdf_writer.add_page(new_page)
+
+    # Save the modified PDF
+    with open(output_pdf_path, 'wb') as output_pdf:
+        pdf_writer.write(output_pdf)
+
+# Usage
+annotate_pdf_with_text(r'C:\Users\sasha\projects\pdfTest\output\outXML.xml', r'C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf', r'C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf')
