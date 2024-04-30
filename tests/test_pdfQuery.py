@@ -5,6 +5,7 @@ from reportlab.pdfgen import canvas
 import io
 import xml.etree.ElementTree as ET
 import math
+import os
 
 file_path = r"C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf"
 output_pdf_path = r"C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf"
@@ -15,6 +16,18 @@ pdf.tree.write(r"C:\Users\sasha\projects\pdfTest\output\outXML.xml", pretty_prin
 
 packet = io.BytesIO()
 can = canvas.Canvas(packet)
+
+
+def process_pdf_file(pdf_file_path):
+    print(f"Processing {pdf_file_path}...")
+    with open(pdf_file_path, 'rb') as file:
+        pdf_reader = PdfReader(file)
+        metadata = pdf_reader.metadata
+
+    # Access and print the /Producer parameter from metadata
+    producer = metadata.get('/Producer', 'Producer not found')
+    print(f"Producer: {producer}\n")
+
 
 def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
     tree = ET.parse(xml_path)
@@ -72,4 +85,6 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
     with open(output_pdf_path, 'wb') as output_pdf:
         pdf_writer.write(output_pdf)
 
+
+process_pdf_file(r'C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf')
 annotate_pdf_with_text(r'C:\Users\sasha\projects\pdfTest\output\outXML.xml', r'C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf', r'C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf')
