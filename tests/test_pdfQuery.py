@@ -6,6 +6,7 @@ import io
 import xml.etree.ElementTree as ET
 import math
 import os
+import pandas as pd
 
 file_path = r"C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf"
 output_pdf_path = r"C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf"
@@ -55,12 +56,12 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
             can.rect(x0, y0, x1 - x0, y1 - y0, stroke=1, fill=0)
 
             text = elem.text.strip() if elem.text else ""
-            if x0 == 17.65 and text:
+            if x0 < 18 and x0 > 17 and text:
                 results_bene.append([x0, y0, x1, y1, text])
-                print(f"** Match Found Bene ** Coordinates: ({x0}, {y0}, {x1}, {y1}) - Text: {text}")
-            if round(x1 * 10) / 10 == 403 and text:
+                #print(f"** Match Found Bene ** Coordinates: ({x0}, {y0}, {x1}, {y1}) - Text: {text}")
+            if x1 > 402 and x1 < 404 and text:
                 results_pos.append([x0, y0, x1, y1, text])
-                print(f"** Match Found Position ** Coordinates: ({x0}, {y0}, {x1}, {y1}) - Position: {text}")
+                #print(f"** Match Found Position ** Coordinates: ({x0}, {y0}, {x1}, {y1}) - Position: {text}")
 
 
             #[17.65, 505.303, 184.118, 514.253, 'Aviva Investors UK Fund Services Limited']
@@ -68,19 +69,45 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
             text_x = x0
             text_y = y0
             can.drawString(text_x, text_y, text)
-        #     print(text_x, text_y, x1, y1, text)
+            # 360.65 493.303 402.947 502.253
+            # 368.15 511.303 402.983 520.253
 
-        print(results_pos)
-        print(results_bene)
+            # print(text_x, text_y, x1, y1, text)
+        #
+        # print(results_pos)
+        # print(results_bene)
         print("\n" + "=" * 40 + "\n")
-        results_bene = []
-        results_pos = []
+        df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene'])
+        df_pos = pd.DataFrame(results_pos, columns=['x0', 'y0', 'x1', 'y1', 'text_pos'])
+        df_bene['y0'] = df_bene['y0'].round().astype(int)
+        df_bene['y1'] = df_bene['y1'].round().astype(int)
+        df_pos['y0'] = df_pos['y0'].round().astype(int)
+        df_pos['y1'] = df_pos['y1'].round().astype(int)
+        df_bene['x0'] = df_bene['x0'].round().astype(int)
+        df_bene['x1'] = df_bene['x1'].round().astype(int)
+        df_pos['x0'] = df_pos['x0'].round().astype(int)
+        df_pos['x1'] = df_pos['x1'].round().astype(int)
 
-        can.save()
-        packet.seek(0)
-        new_pdf = PdfReader(packet)
-        new_page = new_pdf.pages[0]
-        pdf_writer.add_page(new_page)
+        # print(df_pos.columns)
+        # print(df_pos[['x1', 'text_pos']])
+        # print(df_bene[['y1', 'text_bene']])
+
+        # Merge the DataFrames based on the y1 coordinate
+        merged_df = pd.merge(df_bene, df_pos, on='y1', how='inner')
+        # print(merged_df.columns)
+
+        # Display the merged DataFrame
+        if not merged_df.empty:
+            print('')
+            print(merged_df[['text_pos', 'text_bene']])
+            results_bene = []
+            results_pos = []
+
+            can.save()
+            packet.seek(0)
+            new_pdf = PdfReader(packet)
+            new_page = new_pdf.pages[0]
+            pdf_writer.add_page(new_page)
 
     with open(output_pdf_path, 'wb') as output_pdf:
         pdf_writer.write(output_pdf)
