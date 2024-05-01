@@ -30,6 +30,47 @@ def process_pdf_file(pdf_file_path):
     producer = metadata.get('/Producer', 'Producer not found')
     print(f"Producer: {producer}\n")
 
+def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin, results_date, results_owner):
+    for record in all_text:
+        if record in flat_list:
+            results_owner.append(record)
+
+        if record[4] == 'End':
+            if results_bene or results_pos:  # Check if there are any records to process
+                df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene'])
+                df_pos = pd.DataFrame(results_pos, columns=['x0', 'y0', 'x1', 'y1', 'text_pos'])
+
+                # Column Rounding
+                for df in [df_bene, df_pos]:
+                    for col in ['y0', 'y1', 'x0', 'x1']:
+                        df[col] = df[col].round().astype(int)
+
+                # Merge the DataFrames based on the y1 coordinate
+                merged_df = pd.merge(df_bene, df_pos, on='y1', how='inner')
+                merged_df = merged_df[merged_df['text_pos'] != 'Holding']
+
+                # Print the merged DataFrame
+                if not merged_df.empty:
+                    merged_df['ISIN'] = results_isin[0][4]
+                    merged_df['Holding Date'] = results_date[0]
+                    print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene']])
+
+            results_bene = []  # Reset the beneficiary results list
+            results_pos = []  # Reset the position results list
+            results_isin = []
+            results_date = []
+            results_owner = []
+            continue  # Skip to the next iteration of the loop
+
+        if 17 < record[0] < 18:
+            results_bene.append(record)
+        if 402 < record[2] < 404:
+            results_pos.append(record)
+        if 95 < record[0] < 96 and 625 < record[1] < 626 and 156 < record[2] < 157 and 634 < record[3] < 635:
+            results_isin.append(record)
+        if 17 < record[0] < 18 and 685 < record[1] < 686 and 123 < record[2] < 124 and 693 < record[3] < 694:
+            clean_date = record[4].replace('Holding Date : ', '')
+            results_date.append(clean_date)
 
 def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
     tree = ET.parse(xml_path)
@@ -117,49 +158,7 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
     flat_list = [sublist2 for sublist1 in collections for sublist2 in sublist1]
     print(f'Collections are: {flat_list}')
 
-    for record in all_text:
-        if record in flat_list:
-            results_owner.append(record)
-
-        if record[4] == 'End':
-            if results_bene or results_pos:  # Check if there are any records to process
-                df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene'])
-                df_pos = pd.DataFrame(results_pos, columns=['x0', 'y0', 'x1', 'y1', 'text_pos'])
-                df_bene['y0'] = df_bene['y0'].round().astype(int)
-                df_bene['y1'] = df_bene['y1'].round().astype(int)
-                df_pos['y0'] = df_pos['y0'].round().astype(int)
-                df_pos['y1'] = df_pos['y1'].round().astype(int)
-                df_bene['x0'] = df_bene['x0'].round().astype(int)
-                df_bene['x1'] = df_bene['x1'].round().astype(int)
-                df_pos['x0'] = df_pos['x0'].round().astype(int)
-                df_pos['x1'] = df_pos['x1'].round().astype(int)
-
-                # Merge the DataFrames based on the y1 coordinate
-                merged_df = pd.merge(df_bene, df_pos, on='y1', how='inner')
-                merged_df = merged_df[merged_df['text_pos'] != 'Holding']
-
-                # Print the merged DataFrame
-                if not merged_df.empty:
-                    merged_df['ISIN'] = results_isin[0][4]
-                    merged_df['Holding Date'] = results_date[0]
-                    print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene']])
-
-            results_bene = []  # Reset the beneficiary results list
-            results_pos = []  # Reset the position results list
-            results_isin = []
-            results_date = []
-            results_owner = []
-            continue  # Skip to the next iteration of the loop
-
-        if 17 < record[0] < 18:
-            results_bene.append(record)
-        if 402 < record[2] < 404:
-            results_pos.append(record)
-        if 95 < record[0] < 96 and 625 < record[1] < 626 and 156 < record[2] < 157 and 634 < record[3] < 635:
-            results_isin.append(record)
-        if 17 < record[0] < 18 and 685 < record[1] < 686 and 123 < record[2] < 124 and 693 < record[3] < 694:
-            clean_date = record[4].replace('Holding Date : ', '')
-            results_date.append(clean_date)
+    dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin, results_date, results_owner)
 
     with open(output_pdf_path, 'wb') as output_pdf:
         pdf_writer.write(output_pdf)
