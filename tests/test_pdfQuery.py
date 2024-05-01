@@ -5,6 +5,7 @@ import io
 import xml.etree.ElementTree as ET
 import pandas as pd
 from reportlab.lib.colors import pink, blue
+import openpyxl
 
 pd.set_option('display.max_columns', None)
 
@@ -55,6 +56,15 @@ def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin,
                     merged_df['ISIN'] = results_isin[0][4]
                     merged_df['Holding Date'] = results_date[0]
                     print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene', 'owner']])
+
+                    # Specify the file path
+                    file_path = r"C:\Users\sasha\OneDrive - CMi2i\Desktop\pdfProcessorOut.xlsx"
+
+                    # Write the DataFrame to an Excel file
+                    with pd.ExcelWriter(file_path, engine='openpyxl', mode='w') as writer:
+                        merged_df.to_excel(writer, index=False, sheet_name='Results')
+
+                    print(f"Data successfully saved to {file_path}")
 
             results_bene = []  # Reset the beneficiary results list
             results_pos = []  # Reset the position results list
@@ -143,8 +153,8 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
         new_page = new_pdf.pages[0]
         pdf_writer.add_page(new_page)
 
-    print('All text is: ' + str(all_text))
-    print('Underlined text is: ' + str(underline_text))
+    # print('All text is: ' + str(all_text))
+    # print('Underlined text is: ' + str(underline_text))
 
     matched_records = []  # Initialize outside to accumulate data over multiple iterations
     collections = []  #
@@ -160,7 +170,7 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
                     matched_records.append(record)  # Store matched records
 
     flat_list = [sublist2 for sublist1 in collections for sublist2 in sublist1]
-    print(f'Collections are: {flat_list}')
+    # print(f'Collections are: {flat_list}')
 
     dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin, results_date, results_owner)
 
