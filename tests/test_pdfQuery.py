@@ -31,13 +31,14 @@ def process_pdf_file(pdf_file_path):
     print(f"Producer: {producer}\n")
 
 def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin, results_date, results_owner):
+    curr_record = None
     for record in all_text:
         if record in flat_list:
             results_owner.append(record)
 
         if record[4] == 'End':
             if results_bene or results_pos:  # Check if there are any records to process
-                df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene'])
+                df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene', 'owner'])
                 df_pos = pd.DataFrame(results_pos, columns=['x0', 'y0', 'x1', 'y1', 'text_pos'])
 
                 # Column Rounding
@@ -53,17 +54,20 @@ def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin,
                 if not merged_df.empty:
                     merged_df['ISIN'] = results_isin[0][4]
                     merged_df['Holding Date'] = results_date[0]
-                    print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene']])
+                    print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene', 'owner']])
 
             results_bene = []  # Reset the beneficiary results list
             results_pos = []  # Reset the position results list
             results_isin = []
             results_date = []
-            results_owner = []
+            results_owners = []
             continue  # Skip to the next iteration of the loop
 
+        if record in results_owner:
+            curr_record = record[4]
         if 17 < record[0] < 18:
-            results_bene.append(record)
+            modified_record = record + [curr_record]
+            results_bene.append(modified_record)
         if 402 < record[2] < 404:
             results_pos.append(record)
         if 95 < record[0] < 96 and 625 < record[1] < 626 and 156 < record[2] < 157 and 634 < record[3] < 635:
