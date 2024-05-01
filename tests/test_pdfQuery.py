@@ -44,6 +44,7 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
     results_date = []
     results_owner = []
     all_text = []
+    underline_text = []
 
     for page in root.findall('.//LTPage'):
         page_num = int(page.get('page_index'))
@@ -63,7 +64,7 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
             text = elem.text.strip() if elem.text else ""
             text_x = x0
             text_y = y0
-            #can.drawString(text_x, text_y, text)
+            can.drawString(text_x, text_y, text)
 
             if text:
                 all_text.append([text_x, text_y, x1, y1, text])
@@ -76,15 +77,19 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
             can.setLineWidth(1)
             can.line(x0, y0, x1, y1)
 
+            # coordinate_text = f'({x0:.2f}, {y0:.2f}) - ({x1:.2f}, {y1:.2f})'
+            # text_x = (x0 + x1) / 2  # Position the label in the middle of the line horizontally
+            # text_y = y0 + 2  # Position the label slightly above the line vertically
+            # can.drawString(text_x, text_y, coordinate_text)
+
+            underline_text.append([x0, y0, x1, y1])
+
         for elem in page.findall('.//LTLine[@bbox]'):  # Adjust this XPath if necessary
             bbox = eval(elem.get('bbox'))  # Safely parse 'bbox' attribute to get coordinates
             x0, y0, x1, y1 = map(float, bbox)  # Convert all coordinates to floats
-            print(f'Coordinates of the underline: {x0, y0, x1, y1}')
 
-            # Set the color for drawing to pink
             can.setStrokeColor(pink)
             can.setLineWidth(1)  # Set line width, adjust as needed
-            # Draw a line for LTLine elements
             can.line(x0, y0, x1, y1)  # Draw a line from start to end point
 
         can.save()
@@ -93,9 +98,29 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
         new_page = new_pdf.pages[0]
         pdf_writer.add_page(new_page)
 
-    print(all_text)
+    print('All text is: ' + str(all_text))
+    print('Underlined text is: ' + str(underline_text))
+
+    matched_records = []  # Initialize outside to accumulate data over multiple iterations
+    collections = []  #
 
     for record in all_text:
+        if record[4] == 'End':
+            if matched_records:
+                collections.append(matched_records.copy())  # Add the copy of the list to collections
+                matched_records.clear()  # Clear the list for the next set of records
+        else:
+            for row in underline_text:
+                if round(row[0]) == round(record[0]) and round(row[2]) == round(record[2]):
+                    matched_records.append(record)  # Store matched records
+
+    flat_list = [sublist2 for sublist1 in collections for sublist2 in sublist1]
+    print(f'Collections are: {flat_list}')
+
+    for record in all_text:
+        if record in flat_list:
+            results_owner.append(record)
+
         if record[4] == 'End':
             if results_bene or results_pos:  # Check if there are any records to process
                 df_bene = pd.DataFrame(results_bene, columns=['x0', 'y0', 'x1', 'y1', 'text_bene'])
@@ -115,7 +140,6 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
 
                 # Print the merged DataFrame
                 if not merged_df.empty:
-                    print(results_bene)
                     merged_df['ISIN'] = results_isin[0][4]
                     merged_df['Holding Date'] = results_date[0]
                     print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene']])
