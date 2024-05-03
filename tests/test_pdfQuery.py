@@ -6,11 +6,10 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 from reportlab.lib.colors import pink, blue
 import openpyxl
+import datetime
 
 pd.set_option('display.max_columns', None)
 
-# C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf
-# C:\Users\sasha\projects\pdfTest\input\Sample Current Disclosure Forms.pdf
 file_path = r"C:\Users\sasha\projects\pdfTest\input\Various 20230331 (2).pdf"
 output_pdf_path = r"C:\Users\sasha\projects\pdfTest\output\Various 20230331 (2).pdf"
 
@@ -30,6 +29,17 @@ def process_pdf_file(pdf_file_path):
     # Access and print the /Producer parameter from metadata
     producer = metadata.get('/Producer', 'Producer not found')
     print(f"Producer: {producer}\n")
+
+def get_next_file_number(filename="file_count.txt"):
+    try:
+        with open(filename, "r") as file:
+            count = int(file.read().strip()) + 1
+    except FileNotFoundError:
+        count = 1  # If file does not exist, start with 1
+
+    with open(filename, "w") as file:
+        file.write(str(count))
+    return count
 
 def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin, results_date, results_owner):
     curr_record = None
@@ -57,8 +67,9 @@ def dataframe_text(all_text, flat_list, results_bene, results_pos, results_isin,
                     merged_df['Holding Date'] = results_date[0]
                     print(merged_df[['Holding Date', 'ISIN', 'text_pos', 'text_bene', 'owner']])
 
-                    # Specify the file path
-                    file_path = r"C:\Users\sasha\OneDrive - CMi2i\Desktop\pdfProcessorOut.xlsx"
+                    # Get the next file number and generate the file path
+                    file_number = get_next_file_number()
+                    file_path = fr"M:\CDB\Analyst\Sasha\Custodian Automation\Aviva Excels\Aviva Excel {file_number}.xlsx"
 
                     # Write the DataFrame to an Excel file
                     with pd.ExcelWriter(file_path, engine='openpyxl', mode='w') as writer:
@@ -131,11 +142,6 @@ def annotate_pdf_with_text(xml_path, input_pdf_path, output_pdf_path):
             can.setStrokeColor(blue)
             can.setLineWidth(1)
             can.line(x0, y0, x1, y1)
-
-            # coordinate_text = f'({x0:.2f}, {y0:.2f}) - ({x1:.2f}, {y1:.2f})'
-            # text_x = (x0 + x1) / 2  # Position the label in the middle of the line horizontally
-            # text_y = y0 + 2  # Position the label slightly above the line vertically
-            # can.drawString(text_x, text_y, coordinate_text)
 
             underline_text.append([x0, y0, x1, y1])
 
